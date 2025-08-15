@@ -1,47 +1,244 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Football Turf Booking</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1, h2 {
+      color: #2c3e50;
+      text-align: center;
+    }
+    .turf-details {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+      color: #34495e;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+    .message.success {
+      color: #155724;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+    .cost-info {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-weight: 600;
+      color: #2e7d32;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>Book Your Football Turf</h1>
+  <h1>Football Turf Booking</h1>
 
-  <label for="date">Select Date:</label>
-  <input type="date" id="date" min="" />
-  
-  <h3>Booking Form</h3>
+  <div class="turf-details">
+    <h2>About Our Turf</h2>
+    <p>
+      Our premium football turf offers the perfect playing surface for enthusiasts and professionals alike. 
+      Located in a friendly neighborhood, the turf is available for bookings daily from 6:00 AM to 10:00 PM. 
+      The turf has high-quality synthetic grass, excellent lighting, seating arrangements, and refreshment facilities.
+    </p>
+    <h3>Booking Details:</h3>
+    <ul>
+      <li>Hourly Rate: ₹500 per hour</li>
+      <li>Booking Hours: 6:00 AM to 10:00 PM</li>
+      <li>Max Booking Duration: 4 hours</li>
+    </ul>
+  </div>
+
   <form id="booking-form">
-    <input type="text" id="name" placeholder="Your Name" required /><br/><br/>
-    <input type="text" id="contact" placeholder="Contact Number" required /><br/><br/>
+    <label for="date">Select Date</label>
+    <input type="date" id="date" min="" required />
+
+    <label for="start-time">Select Start Time</label>
+    <select id="start-time" required>
+      <option value="">-- Select Start Time --</option>
+    </select>
+
+    <label for="hours">Number of Hours (Max 4)</label>
+    <select id="hours" required>
+      <option value="">-- Select Hours --</option>
+      <option value="1">1 Hour</option>
+      <option value="2">2 Hours</option>
+      <option value="3">3 Hours</option>
+      <option value="4">4 Hours</option>
+    </select>
+
+    <div class="cost-info" id="cost-info">Total Cost: ₹0</div>
+
+    <label for="name">Your Name</label>
+    <input type="text" id="name" placeholder="Enter your full name" required />
+
+    <label for="contact">Contact Number</label>
+    <input type="tel" id="contact" placeholder="Enter your contact number" required pattern="[0-9]{10}" />
+
     <button type="submit">Book Now</button>
   </form>
 
-  <div id="message"></div>
+  <div id="message" class="message" style="display:none;"></div>
 
   <script>
     const dateInput = document.getElementById('date');
+    const startTimeSelect = document.getElementById('start-time');
+    const hoursSelect = document.getElementById('hours');
+    const costInfo = document.getElementById('cost-info');
     const messageDiv = document.getElementById('message');
+    const HOURLY_RATE = 500;
+    const OPEN_HOUR = 6;  // 6 AM
+    const CLOSE_HOUR = 22;  // 10 PM
+    const MAX_HOURS = 4;
 
-    // Limit date selection from today onwards
+    // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     dateInput.min = today;
 
-    document.getElementById('booking-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      if (!dateInput.value) {
-        messageDiv.style.color = 'red';
-        messageDiv.textContent = 'Please select a date.';
+    // Generate start time options on page load
+    function populateStartTimes() {
+      startTimeSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
+      for(let hour = OPEN_HOUR; hour < CLOSE_HOUR; hour++) {
+        const displayHour = hour < 12 ? hour + ':00 AM' : (hour === 12 ? '12:00 PM' : (hour - 12) + ':00 PM');
+        startTimeSelect.options.add(new Option(displayHour, hour));
+      }
+    }
+
+    // Update valid hours options based on start time
+    function updateHoursOptions() {
+      const selectedStart = parseInt(startTimeSelect.value);
+      hoursSelect.innerHTML = '<option value="">-- Select Hours --</option>';
+      if (!selectedStart) {
+        costInfo.textContent = 'Total Cost: ₹0';
         return;
       }
+      const maxHoursAllowed = Math.min(MAX_HOURS, CLOSE_HOUR - selectedStart);
+      for(let h = 1; h <= maxHoursAllowed; h++) {
+        hoursSelect.options.add(new Option(`${h} Hour${h > 1 ? 's' : ''}`, h));
+      }
+      costInfo.textContent = 'Total Cost: ₹0';
+    }
 
+    // Update cost when hours change
+    function updateCost() {
+      const hours = parseInt(hoursSelect.value);
+      if (!hours || isNaN(hours)) {
+        costInfo.textContent = 'Total Cost: ₹0';
+      } else {
+        costInfo.textContent = `Total Cost: ₹${hours * HOURLY_RATE}`;
+      }
+    }
+
+    // Initialize start times dropdown
+    populateStartTimes();
+
+    // Event listeners
+    startTimeSelect.addEventListener('change', () => {
+      updateHoursOptions();
+      messageDiv.style.display = 'none';
+    });
+    hoursSelect.addEventListener('change', () => {
+      updateCost();
+      messageDiv.style.display = 'none';
+    });
+
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      messageDiv.style.display = 'none';
+
+      const date = dateInput.value;
+      const startTime = startTimeSelect.value;
+      const hours = hoursSelect.value;
       const name = document.getElementById('name').value.trim();
       const contact = document.getElementById('contact').value.trim();
 
-      messageDiv.style.color = 'green';
-      messageDiv.innerHTML = `<strong>Thanks, ${name}!</strong> Your booking request for <strong>${dateInput.value}</strong> has been received. We will contact you at <strong>${contact}</strong>.`;
+      if (!date || !startTime || !hours || !name || !contact) {
+        messageDiv.style.color = '#721c24';
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'Please fill in all fields correctly.';
+        messageDiv.style.display = 'block';
+        return;
+      }
 
-      // Clear form after submission
+      const phonePattern = /^[0-9]{10}$/;
+      if (!phonePattern.test(contact)) {
+        messageDiv.style.color = '#721c24';
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'Please enter a valid 10-digit contact number.';
+        messageDiv.style.display = 'block';
+        return;
+      }
+
+      // Show confirmation message (no real backend yet)
+      messageDiv.style.color = '#155724';
+      messageDiv.className = 'message success';
+      const displayTime = (h) => (h < 12 ? h + ':00 AM' : (h === 12 ? '12:00 PM' : (h-12) + ':00 PM'));
+      const startDisplay = displayTime(parseInt(startTime));
+      const endDisplay = displayTime(parseInt(startTime) + parseInt(hours));
+
+      messageDiv.innerHTML = `
+        <strong>Thank you, ${name}!</strong><br/>
+        Your booking for <strong>${date}</strong> from <strong>${startDisplay}</strong> to <strong>${endDisplay}</strong> is received.<br/>
+        Total cost: <strong>₹${hours * HOURLY_RATE}</strong><br/>
+        We will contact you shortly at <strong>${contact}</strong>.
+      `;
+
       this.reset();
+      costInfo.textContent = 'Total Cost: ₹0';
+      startTimeSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
+      populateStartTimes();
       dateInput.value = '';
     });
   </script>
