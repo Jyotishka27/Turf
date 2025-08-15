@@ -241,6 +241,69 @@
       populateStartTimes();
       dateInput.value = '';
     });
+
+    document.getElementById('booking-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    messageDiv.style.display = 'none';
+
+    const date = dateInput.value;
+    const startTime = startTimeSelect.value;
+    const hours = hoursSelect.value;
+    const name = document.getElementById('name').value.trim();
+    const contact = document.getElementById('contact').value.trim();
+
+    // Validate inputs same as before...
+
+    if (!date || !startTime || !hours || !name || !contact) {
+      messageDiv.style.color = '#721c24';
+      messageDiv.className = 'message error';
+      messageDiv.textContent = 'Please fill in all fields correctly.';
+      messageDiv.style.display = 'block';
+      return;
+    }
+
+    const phonePattern = /^[0-9]{10}$/;
+    if (!phonePattern.test(contact)) {
+      messageDiv.style.color = '#721c24';
+      messageDiv.className = 'message error';
+      messageDiv.textContent = 'Please enter a valid 10-digit contact number.';
+      messageDiv.style.display = 'block';
+      return;
+    }
+
+    // Post booking details to backend
+    const bookingData = { date, startTime, hours, name, contact };
+    try {
+      const response = await fetch('http://localhost:3000/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        // Redirect to success page with booking details in URL
+        const params = new URLSearchParams({
+          date,
+          startTime,
+          hours,
+          name,
+          contact,
+        });
+        window.location.href = `success.html?${params.toString()}`;
+      } else {
+        messageDiv.style.color = '#721c24';
+        messageDiv.className = 'message error';
+        messageDiv.textContent = result.message || 'Booking failed.';
+        messageDiv.style.display = 'block';
+      }
+    } catch (error) {
+      messageDiv.style.color = '#721c24';
+      messageDiv.className = 'message error';
+      messageDiv.textContent = 'Network error. Please try again later.';
+      messageDiv.style.display = 'block';
+    }
+  });
   </script>
 </body>
 </html>
