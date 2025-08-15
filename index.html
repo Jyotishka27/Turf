@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Football Turf Booking</title>
+</head>
+<body>
+  <h1>Book Your Football Turf</h1>
+
+  <label for="date">Select Date:</label>
+  <input type="date" id="date" min="" />
+  
+  <h3>Booking Form</h3>
+  <form id="booking-form">
+    <input type="text" id="name" placeholder="Your Name" required /><br/><br/>
+    <input type="text" id="contact" placeholder="Contact Number" required /><br/><br/>
+    <button type="submit">Book Now</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script>
+    const dateInput = document.getElementById('date');
+    const messageDiv = document.getElementById('message');
+
+    // Limit date selection from today onwards
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!dateInput.value) {
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = 'Please select a date.';
+        return;
+      }
+
+      const name = document.getElementById('name').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+
+      messageDiv.style.color = 'green';
+      messageDiv.innerHTML = `<strong>Thanks, ${name}!</strong> Your booking request for <strong>${dateInput.value}</strong> has been received. We will contact you at <strong>${contact}</strong>.`;
+
+      // Clear form after submission
+      this.reset();
+      dateInput.value = '';
+    });
+  </script>
+</body>
+</html>
