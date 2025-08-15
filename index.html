@@ -85,7 +85,6 @@
 </head>
 <body>
   <h1>Football Turf Booking</h1>
-
   <div class="turf-details">
     <h2>About Our Turf</h2>
     <p>
@@ -100,38 +99,25 @@
       <li>Max Booking Duration: 4 hours</li>
     </ul>
   </div>
-
   <form id="booking-form">
     <label for="date">Select Date</label>
     <input type="date" id="date" min="" required />
-
     <label for="start-time">Select Start Time</label>
     <select id="start-time" required>
       <option value="">-- Select Start Time --</option>
     </select>
-
     <label for="hours">Number of Hours (Max 4)</label>
     <select id="hours" required>
       <option value="">-- Select Hours --</option>
-      <option value="1">1 Hour</option>
-      <option value="2">2 Hours</option>
-      <option value="3">3 Hours</option>
-      <option value="4">4 Hours</option>
     </select>
-
     <div class="cost-info" id="cost-info">Total Cost: ₹0</div>
-
     <label for="name">Your Name</label>
     <input type="text" id="name" placeholder="Enter your full name" required />
-
     <label for="contact">Contact Number</label>
     <input type="tel" id="contact" placeholder="Enter your contact number" required pattern="[0-9]{10}" />
-
     <button type="submit">Book Now</button>
   </form>
-
   <div id="message" class="message" style="display:none;"></div>
-
   <script>
     const dateInput = document.getElementById('date');
     const startTimeSelect = document.getElementById('start-time');
@@ -194,7 +180,8 @@
       messageDiv.style.display = 'none';
     });
 
-    document.getElementById('booking-form').addEventListener('submit', function(e) {
+    // Submit handler with validation, backend call, and redirect
+    document.getElementById('booking-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       messageDiv.style.display = 'none';
 
@@ -221,89 +208,39 @@
         return;
       }
 
-      // Show confirmation message (no real backend yet)
-      messageDiv.style.color = '#155724';
-      messageDiv.className = 'message success';
-      const displayTime = (h) => (h < 12 ? h + ':00 AM' : (h === 12 ? '12:00 PM' : (h-12) + ':00 PM'));
-      const startDisplay = displayTime(parseInt(startTime));
-      const endDisplay = displayTime(parseInt(startTime) + parseInt(hours));
-
-      messageDiv.innerHTML = `
-        <strong>Thank you, ${name}!</strong><br/>
-        Your booking for <strong>${date}</strong> from <strong>${startDisplay}</strong> to <strong>${endDisplay}</strong> is received.<br/>
-        Total cost: <strong>₹${hours * HOURLY_RATE}</strong><br/>
-        We will contact you shortly at <strong>${contact}</strong>.
-      `;
-
-      this.reset();
-      costInfo.textContent = 'Total Cost: ₹0';
-      startTimeSelect.innerHTML = '<option value="">-- Select Start Time --</option>';
-      populateStartTimes();
-      dateInput.value = '';
-    });
-
-    document.getElementById('booking-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    messageDiv.style.display = 'none';
-
-    const date = dateInput.value;
-    const startTime = startTimeSelect.value;
-    const hours = hoursSelect.value;
-    const name = document.getElementById('name').value.trim();
-    const contact = document.getElementById('contact').value.trim();
-
-    // Validate inputs same as before...
-
-    if (!date || !startTime || !hours || !name || !contact) {
-      messageDiv.style.color = '#721c24';
-      messageDiv.className = 'message error';
-      messageDiv.textContent = 'Please fill in all fields correctly.';
-      messageDiv.style.display = 'block';
-      return;
-    }
-
-    const phonePattern = /^[0-9]{10}$/;
-    if (!phonePattern.test(contact)) {
-      messageDiv.style.color = '#721c24';
-      messageDiv.className = 'message error';
-      messageDiv.textContent = 'Please enter a valid 10-digit contact number.';
-      messageDiv.style.display = 'block';
-      return;
-    }
-
-    // Post booking details to backend
-    const bookingData = { date, startTime, hours, name, contact };
-    try {
-      const response = await fetch('http://localhost:3000/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingData),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        // Redirect to success page with booking details in URL
-        const params = new URLSearchParams({
-          date,
-          startTime,
-          hours,
-          name,
-          contact,
+      const bookingData = { date, startTime, hours, name, contact };
+      try {
+        const response = await fetch('http://localhost:3000/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bookingData),
         });
-        window.location.href = `success.html?${params.toString()}`;
-      } else {
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Redirect to success page with booking details in URL
+          const params = new URLSearchParams({
+            date,
+            startTime,
+            hours,
+            name,
+            contact,
+          });
+          window.location.href = `success.html?${params.toString()}`;
+        } else {
+          messageDiv.style.color = '#721c24';
+          messageDiv.className = 'message error';
+          messageDiv.textContent = result.message || 'Booking failed.';
+          messageDiv.style.display = 'block';
+        }
+      } catch (error) {
         messageDiv.style.color = '#721c24';
         messageDiv.className = 'message error';
-        messageDiv.textContent = result.message || 'Booking failed.';
+        messageDiv.textContent = 'Network error. Please try again later.';
         messageDiv.style.display = 'block';
       }
-    } catch (error) {
-      messageDiv.style.color = '#721c24';
-      messageDiv.className = 'message error';
-      messageDiv.textContent = 'Network error. Please try again later.';
-      messageDiv.style.display = 'block';
-    }
-  });
+    });
   </script>
 </body>
 </html>
